@@ -45,11 +45,11 @@ export const FocusSession: React.FC = () => {
         <div style={panel}>
           <div style={{fontWeight:600}}>Session Summary</div>
           <div style={{fontSize:12, opacity:.8}}>Duration: {summary.durationMinutes} min</div>
+          <div style={{fontSize:12, opacity:.8}}>Rocks Processed: {summary.rocksProcessed}</div>
           <div style={{display:'flex', gap:6, flexWrap:'wrap', marginTop:6}}>
             {Object.entries(summary.minerals).map(([k,v]) => (
               <div key={k} style={pill}>{k}:{v}</div>
             ))}
-            <div style={pill}>rocks:{summary.rocks}</div>
           </div>
           <button onClick={ackSummary} style={{...smallBtn, alignSelf:'flex-start'}}>Close</button>
         </div>

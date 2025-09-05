@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type MineralKey = 'rock' | 'copper' | 'silver' | 'gold';
+export type MineralKey = 'copper' | 'silver' | 'gold';
 
 interface Upgrade {
   id: string;
@@ -13,7 +13,7 @@ interface Upgrade {
 
 interface SessionSummary {
   minerals: Record<MineralKey, number>;
-  rocks: number;
+  rocksProcessed: number; // total rocks processed this session
   durationMinutes: number;
 }
 
@@ -24,10 +24,10 @@ interface GameState {
   sessionStart: number | null;
   sessionEnd: number | null;
   sessionDurationMinutes: number | null;
-  rateTimeline: RatePoint[]; // changes in mining rate during session
-  rocksMined: number; // committed lifetime
-  baseRate: number; // rocks per minute (current live rate)
-  minerals: Record<MineralKey, number>; // committed lifetime
+  rateTimeline: RatePoint[];
+  rocksMined: number; // lifetime rocks processed
+  baseRate: number; // rocks per minute
+  minerals: Record<MineralKey, number>; // lifetime minerals
   upgrades: Upgrade[];
   summary: SessionSummary | null;
   startFocus: (minutes: number) => void;
@@ -35,16 +35,16 @@ interface GameState {
   completeNow: () => void;
   ackSummary: () => void;
   purchaseUpgrade: (id: string) => void;
-  finalizeIfNeeded: () => void; // called to check natural completion
-  // helper not exposed in type but used internally
+  finalizeIfNeeded: () => void;
 }
 
-const rollMineral = (): MineralKey => {
+// Returns a mineral or null (nothing found in that rock)
+const rollMineral = (): MineralKey | null => {
   const r = Math.random();
-  if (r < 0.0001) return 'gold';
-  if (r < 0.02) return 'silver';
-  if (r < 0.12) return 'copper';
-  return 'rock';
+  if (r < 0.0001) return 'gold';      // 0.01%
+  if (r < 0.02) return 'silver';      // 2%
+  if (r < 0.12) return 'copper';      // next 10%
+  return null;                        // remaining 88% empty
 };
 
 export const useGameStore = create<GameState>((set, get) => ({
@@ -55,21 +55,21 @@ export const useGameStore = create<GameState>((set, get) => ({
   rateTimeline: [],
   rocksMined: 0,
   baseRate: 3,
-  minerals: { rock:0, copper:0, silver:0, gold:0 },
+  minerals: { copper:0, silver:0, gold:0 },
   upgrades: [
     {
       id:'pick1',
       name:'Sharpened Pick',
       description:'Increase mining speed by 50%.',
-      cost:{ rock:50 },
+      cost:{ copper:10 },
       apply: (s) => { s.baseRate *= 1.5; }
     },
     {
       id:'lamp1',
       name:'Brighter Lantern',
-      description:'+10% chance tier upgrade (rock->copper etc).',
-      cost:{ copper:20 },
-      apply: () => { /* effect applied probabilistically at session finalize */ }
+      description:'10% chance to bump a find up one rarity tier (or create copper from empty).',
+      cost:{ silver:5 },
+      apply: () => { /* handled in finalize */ }
     }
   ],
   summary: null,
@@ -91,7 +91,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   completeNow: () => {
     const s = get();
     if (!s.focusActive) return;
-    finalizeSession(true); // force full yield of scheduled session
+    finalizeSession(true);
   },
   ackSummary: () => set({ summary: null }),
   purchaseUpgrade: (id) => {
@@ -109,12 +109,9 @@ export const useGameStore = create<GameState>((set, get) => ({
         upgrades: s.upgrades.map(u=>u.id===id?{...u,purchased:true}:u)
       };
       up.apply(clone);
-      // if rate changed during active session, append new rate point
       let rateTimeline = s.rateTimeline;
-      if (s.focusActive && s.sessionStart) {
-        if (clone.baseRate !== beforeRate) {
-          rateTimeline = [...rateTimeline, { t: Date.now(), rate: clone.baseRate }];
-        }
+      if (s.focusActive && s.sessionStart && clone.baseRate !== beforeRate) {
+        rateTimeline = [...rateTimeline, { t: Date.now(), rate: clone.baseRate }];
       }
       return { ...clone, rateTimeline };
     });
@@ -123,7 +120,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const s = get();
     if (!s.focusActive || !s.sessionStart || !s.sessionEnd) return;
     const now = Date.now();
-    if (now < s.sessionEnd) return; // not yet
+    if (now < s.sessionEnd) return;
     finalizeSession(false);
   }
 }));
@@ -133,41 +130,42 @@ function finalizeSession(force: boolean) {
   if (!s.focusActive || !s.sessionStart || !s.sessionEnd) return;
   const plannedEnd = s.sessionEnd;
   const effectiveEnd = force ? plannedEnd : Math.min(Date.now(), plannedEnd);
+  const integrationEnd = force ? plannedEnd : effectiveEnd;
 
-  // Calculate total rocks using rate timeline integration up to effectiveEnd
-  const end = plannedEnd; // always integrate over full planned time for force; for natural completion end === plannedEnd
-  const useFullPlanned = force; // clarify intent
-  const integrationEnd = useFullPlanned ? plannedEnd : effectiveEnd;
-  const points = [...s.rateTimeline];
-  points.sort((a,b)=>a.t-b.t);
+  const points = [...s.rateTimeline].sort((a,b)=>a.t-b.t);
   let totalRocksFloat = 0;
   for (let i=0;i<points.length;i++) {
     const p = points[i];
     const nextT = (i+1<points.length ? points[i+1].t : integrationEnd);
     const segEnd = Math.min(nextT, integrationEnd);
     if (segEnd <= p.t) continue;
-    const durMs = segEnd - p.t;
-    totalRocksFloat += (durMs/60000) * p.rate;
+    totalRocksFloat += ((segEnd - p.t)/60000) * p.rate;
     if (nextT > integrationEnd) break;
   }
   const rocksWhole = Math.max(0, Math.floor(totalRocksFloat));
 
-  const mineralsGained: Record<MineralKey, number> = { rock:0, copper:0, silver:0, gold:0 };
+  const mineralsGained: Record<MineralKey, number> = { copper:0, silver:0, gold:0 };
   const hasLamp = s.upgrades.some(u=>u.id==='lamp1' && u.purchased);
   for (let i=0;i<rocksWhole;i++) {
     let m = rollMineral();
     if (hasLamp && Math.random()<0.10) {
-      if (m==='rock') m='copper'; else if (m==='copper') m='silver'; else if (m==='silver') m='gold';
+      // bump tier or create copper from empty
+      if (m === null) m = 'copper';
+      else if (m==='copper') m='silver';
+      else if (m==='silver') m='gold';
     }
-    mineralsGained[m]++;
+    if (m) mineralsGained[m]++;
   }
+
   const newMinerals: Record<MineralKey, number> = { ...s.minerals } as any;
   (Object.keys(mineralsGained) as MineralKey[]).forEach(k => { newMinerals[k] = (newMinerals[k]||0) + mineralsGained[k]; });
+
   const summary: SessionSummary = {
     minerals: { ...mineralsGained },
-    rocks: rocksWhole,
+    rocksProcessed: rocksWhole,
     durationMinutes: s.sessionDurationMinutes || 0
   };
+
   useGameStore.setState({
     focusActive: false,
     sessionStart: null,
@@ -180,9 +178,8 @@ function finalizeSession(force: boolean) {
   });
 }
 
-// Passive check interval for session completion only (no resource accrual mid-session)
 if (typeof window !== 'undefined') {
   setInterval(()=>{
     useGameStore.getState().finalizeIfNeeded();
-  }, 5000); // coarse; no need fine-grained
+  }, 5000);
 }

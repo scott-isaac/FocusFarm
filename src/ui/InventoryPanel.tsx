@@ -9,7 +9,7 @@ export const InventoryPanel: React.FC = () => {
       <div style={{display:'flex', flexWrap:'wrap', gap:8}}>
         {Object.entries(minerals).map(([k,v]) => (
           <div key={k} style={{background:'#161b22', padding:8, border:'1px solid #30363d', borderRadius:6, minWidth:100}}>
-            <strong>{k}</strong>: {v}
+            <strong>{k}</strong>: {v as number}
           </div>
         ))}
       </div>
