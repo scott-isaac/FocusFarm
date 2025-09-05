@@ -41,6 +41,28 @@ button { font-family:inherit; }
 
 .range-input { width:100%; }
 
+.avatar-wrapper { display:flex; flex-direction:column; align-items:center; gap:6px; }
+.avatar-stage { position:relative; width:140px; height:140px; background:linear-gradient(#181e26,#0d1117); border:1px solid var(--border); border-radius:16px; display:flex; align-items:flex-end; justify-content:center; padding:8px; overflow:hidden; }
+.avatar-char { width:120px; height:120px; position:relative; }
+.avatar-char .body { display:none; }
+.avatar-body { width:120px; height:120px; overflow:visible; }
+.avatar-body .torso { fill:#ffcc66; stroke:#e6b24d; stroke-width:2; }
+.avatar-body .helmet { fill:#324860; stroke:#223242; stroke-width:2; }
+.avatar-body .helmet-band { fill:#ffb347; }
+.avatar-body .eye { fill:#222; stroke:#000; stroke-width:1; }
+.avatar-body .shine { fill:rgba(255,255,255,.4); }
+.avatar-pick { position:absolute; left:50%; top:50%; width:120px; height:120px; transform:translate(-50%,-50%); transform-origin:28px 78px; }
+.avatar-pick .shaft { stroke:#8b5a2b; stroke-width:8; stroke-linecap:round; }
+.avatar-pick .head { fill:#c7d4df; stroke:#93a4af; stroke-width:3; }
+.avatar-idle .avatar-pick { animation:idleSwing 2.6s ease-in-out infinite; }
+.avatar-mining .avatar-pick { animation:mineSwing .55s cubic-bezier(.4,.1,.5,1) infinite; }
+.avatar-spark { position:absolute; width:6px; height:6px; background:#ffd27f; border-radius:50%; opacity:0; pointer-events:none; }
+.avatar-mining .avatar-spark { animation:spark 0.55s linear infinite; }
+@keyframes idleSwing { 0%,100% { transform:rotate(-12deg) translateY(2px); } 50% { transform:rotate(8deg) translateY(-2px); } }
+@keyframes mineSwing { 0% { transform:rotate(-20deg) translateY(2px); } 40% { transform:rotate(55deg) translateY(-4px); } 55% { transform:rotate(60deg) translateY(-2px) scale(1.02); } 100% { transform:rotate(-20deg) translateY(2px); } }
+@keyframes spark { 0% { opacity:0; transform:translate(0,0) scale(.4); } 10% { opacity:1; } 60% { opacity:1; transform:translate(18px,-22px) scale(1); } 100% { opacity:0; transform:translate(28px,-34px) scale(.2); } }
+.avatar-label { font-size:12px; opacity:.6; }
+
 @media(min-width:900px){
   .app-shell { max-width:900px; margin:0 auto; }
   .content { padding-bottom:120px; }

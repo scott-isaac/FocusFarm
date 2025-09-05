@@ -3,6 +3,7 @@ import { FocusSession } from './FocusSession';
 import { InventoryPanel } from './InventoryPanel';
 import { UpgradesPanel } from './UpgradesPanel';
 import { useGameStore } from '../useGameStore';
+import { Avatar } from './Avatar';
 
 export const App: React.FC = () => {
   const { minerals, rocksMined } = useGameStore();
@@ -13,6 +14,7 @@ export const App: React.FC = () => {
       </header>
       <main className="content">
         <section className="section-card">
+          <Avatar />
           <FocusSession />
         </section>
         <section className="section-card">
