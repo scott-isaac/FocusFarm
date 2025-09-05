@@ -63,6 +63,12 @@ button { font-family:inherit; }
 @keyframes spark { 0% { opacity:0; transform:translate(0,0) scale(.4); } 10% { opacity:1; } 60% { opacity:1; transform:translate(18px,-22px) scale(1); } 100% { opacity:0; transform:translate(28px,-34px) scale(.2); } }
 .avatar-label { font-size:12px; opacity:.6; }
 
+.avatar-rod { position:absolute; left:50%; top:50%; width:140px; height:140px; transform:translate(-50%,-50%); pointer-events:none; }
+.avatar-rod .pole { stroke:#c9a066; stroke-width:6; stroke-linecap:round; fill:none; }
+.avatar-rod .line { stroke:#e0e6ec; stroke-width:2; stroke-linecap:round; fill:none; }
+.avatar-fishing .avatar-rod { animation:rodBob 2.2s ease-in-out infinite; }
+@keyframes rodBob { 0%,100% { transform:translate(-50%,-50%) rotate(-6deg); } 50% { transform:translate(-50%,-48%) rotate(-2deg); } }
+
 @media(min-width:900px){
   .app-shell { max-width:900px; margin:0 auto; }
   .content { padding-bottom:120px; }

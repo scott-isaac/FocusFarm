@@ -18,7 +18,7 @@ export const App: React.FC = () => {
           <FocusSession />
         </section>
         <section className="section-card">
-            <h2 style={{margin:'0 0 4px', fontSize:18}}>Mine Stats</h2>
+            <h2 style={{margin:'0 0 4px', fontSize:18}}>Resources</h2>
             <p style={{margin:'0 0 12px', fontSize:13, opacity:.8}}>Total Rocks Processed: {rocksMined}</p>
             <div className="minerals-grid">
               {Object.entries(minerals).map(([k,v]) => (
