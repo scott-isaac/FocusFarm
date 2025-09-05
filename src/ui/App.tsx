@@ -14,12 +14,12 @@ export const App: React.FC = () => {
       </div>
       <div style={{padding:16, overflowY:'auto'}}>
         <h2 style={{marginTop:0}}>Mine</h2>
-        <p>Total Rocks Mined: {rocksMined}</p>
-        <div style={{display:'flex', gap:12}}>
+        <p>Total Rocks Mined (lifetime committed): {rocksMined}</p>
+        <div style={{display:'flex', gap:12, flexWrap:'wrap'}}>
           {Object.entries(minerals).map(([k,v]) => (
             <div key={k} style={{background:'#161b22', padding:8, border:'1px solid #30363d', borderRadius:6, minWidth:80}}>
               <div style={{fontSize:12, opacity:.7}}>{k}</div>
-              <div style={{fontWeight:600}}>{v}</div>
+              <div style={{fontWeight:600}}>{v as number}</div>
             </div>
           ))}
         </div>
