@@ -6,7 +6,7 @@ import { useGameStore } from '../useGameStore';
 import { Avatar } from './Avatar';
 
 export const App: React.FC = () => {
-  const { minerals, rocksMined } = useGameStore();
+  const { minerals, rocksMined, mineDepth } = useGameStore();
   return (
     <div className="app-shell">
       <header className="header">
@@ -19,7 +19,8 @@ export const App: React.FC = () => {
         </section>
         <section className="section-card">
             <h2 style={{margin:'0 0 4px', fontSize:18}}>Resources</h2>
-            <p style={{margin:'0 0 12px', fontSize:13, opacity:.8}}>Total Rocks Processed: {rocksMined}</p>
+            <p style={{margin:'0 0 4px', fontSize:13, opacity:.8}}>Total Rocks Processed: {rocksMined}</p>
+            <p style={{margin:'0 0 12px', fontSize:12, opacity:.6}}>Deepest Mine Depth: {Math.floor(mineDepth)} m</p>
             <div className="minerals-grid">
               {Object.entries(minerals).map(([k,v]) => (
                 <div key={k} className="mineral">
