@@ -1,21 +1,103 @@
 # Focus Farm
 
-Tiny React + TypeScript prototype using Vite.
+A minimalist focus-session idle game built with React + TypeScript (Vite). Start a timed focus session, pick an activity, and your character works in the background. Rewards are only calculated when the session ends — so there's nothing to watch, and the app doesn't compete with your real work.
 
-## Run
+**Play it:** https://scott-isaac.github.io/FocusFarm/
+
+## Concept
+
+Focus Farm is designed to reward *real* focus time rather than tab-watching:
+
+- You commit to a session length up front (15–60 minutes by default).
+- During the session, the app stays idle. No numbers tick up, no notifications.
+- When the session ends (or you end it early), the game rolls your rewards all at once and shows a summary.
+- Loot is spent on upgrades that let you go faster, deeper, or longer on future sessions.
+
+## Current State
+
+### Activities
+
+Two activities are implemented; you pick one per session.
+
+**Mining**
+- Base rate: 3 rocks/min (modified by upgrades).
+- Depth progression: each session at your current max depth pushes the floor a little deeper (≈ `log(1 + attempts) * 5`, min 1).
+- Procedural mine: each mine randomizes the unlock depth for each mineral within a fixed range. Unknown minerals show as `???` until reached.
+- Travel penalty: round-trip travel time is subtracted from the session, so deeper runs get fewer swings unless you upgrade travel speed.
+- Minerals (in order): copper, iron, silver, gold, sapphire, emerald, ruby, diamond, mythril.
+
+**Fishing**
+- No depth, no travel — the whole session is casting time.
+- Fish rarity table: sunfish, bluegill, bass, trout, pike, golden koi.
+
+### Systems
+
+- **Rate timeline.** Speed upgrades purchased mid-session only apply to the *remaining* time; attempts are an integral over the timeline.
+- **Upgrade tree.** Split across mining, fishing, and global. Speed boosts, rarity bumps, travel speed, and max session length.
+- **Session summary.** Shows duration, attempts, travel time (mining), depth gained (mining), and a loot breakdown.
+- **Mobile-first UI.** Responsive layout, modal session picker, animated avatar with activity-specific states.
+
+### Tech
+
+- React 18 + TypeScript + Vite
+- Zustand for state
+- Single global CSS file
+- No backend — fully static; state lives in memory and resets on reload.
+
+## Running Locally
 
 ```bash
 npm install
-npm run dev
+npm run dev              # http://localhost:5173
+npm run dev:host         # exposed on LAN for mobile testing
+npm run build            # production build into dist/
+npm run preview          # serve the production build locally
 ```
 
-## Concept
-You "focus" (simulated by leaving the tab open and clicking Start). While focusing your little miner auto-mines rocks at a base rate (3/min). Rocks have rarity rolls for copper, silver, gold. Spend minerals to buy upgrades that improve speed or rarity chances.
+## Deployment
 
-## Next Ideas
-- Add cute avatar animation state (idle vs mining)
-- Better rarity probabilities & prestige loop
-- Cosmetic purchases that only cost common minerals
-- Persistence via localStorage
-- Mobile-friendly responsive layout
-- Particles / simple canvas miner character
+Deployed to GitHub Pages via `.github/workflows/deploy.yml` on every push to `main`. The build publishes the `dist/` folder; `vite.config.ts` sets `base: '/FocusFarm/'` so asset paths resolve correctly under the repo subpath.
+
+## Planned / Roadmap
+
+Near-term:
+- **Persistence.** Save full game state to `localStorage` (upgrades, depth, inventory). Currently only a few prefs are remembered.
+- **Balancing pass.** Unlock depths, mineral weights, and upgrade costs want tuning.
+- **Probability / EV tooltips.** Show expected yield for the chosen session so upgrades feel informed.
+- **Accessibility.** ARIA roles, keyboard nav for the session picker, reduced-motion toggle.
+
+Medium-term:
+- **Multiple mine slots.** Choose or reroll mines with different mineral layouts.
+- **More upgrade tiers.** Higher-tier upgrades gated behind advanced minerals.
+- **Cosmetic shop.** Visual-only sinks for common minerals (avatar outfits, mine skins).
+- **Sound & particles.** Subtle audio cues on session end; light particle polish on the avatar.
+
+Longer-term / speculative:
+- **Prestige / rebirth loop.** Reset for permanent modifiers (new biomes, new activities).
+- **More activities.** Foraging, crafting, or a farm loop to match the name.
+- **Shareable summaries.** Export a session card for bragging rights.
+
+## Project Layout
+
+```
+src/
+  main.tsx              entry point
+  global.css            theme + layout + animations
+  useGameStore.ts       Zustand store, mine generation, roll logic
+  ui/
+    App.tsx
+    Avatar.tsx
+    FocusSession.tsx    timer + activity picker + summary modal
+    InventoryPanel.tsx
+    UpgradesPanel.tsx
+```
+
+## Extending
+
+- **New activity:** extend the `Activity` union, add a roll function, wire it into the session flow and summary panel.
+- **New upgrade:** push into the `upgrades` array with an `apply()` that mutates the relevant rate or limit.
+- **New mineral tier:** append to `MINERAL_ORDER`, add an unlock range in `MINE_DEPTH_RANGES`, and a base weight in `rollMineral`.
+
+## License
+
+Prototype, no explicit license yet.

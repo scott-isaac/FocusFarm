@@ -6,7 +6,7 @@ const LAST_ACTIVITY_KEY = 'ff:lastActivity';
 const LAST_DEPTH_KEY = 'ff:lastDepth';
 
 export const FocusSession: React.FC = () => {
-  const { focusActive, startFocus, interruptFocus, completeNow, summary, ackSummary, sessionEnd, sessionStart, sessionDurationMinutes, mineDepth } = useGameStore();
+  const { focusActive, startFocus, interruptFocus, completeNow, summary, ackSummary, sessionEnd, sessionStart, sessionDurationMinutes, mineDepth, maxSessionMinutes } = useGameStore();
   const [showPicker, setShowPicker] = useState(false);
   const [minutes, setMinutes] = useState<number>(() => { const saved = typeof window !== 'undefined' ? localStorage.getItem(LAST_DURATION_KEY) : null; return saved ? parseInt(saved,10) : 25; });
   const [activity, setActivity] = useState<'mining'|'fishing'>(()=> (localStorage.getItem(LAST_ACTIVITY_KEY) as any)||'mining');
@@ -14,6 +14,7 @@ export const FocusSession: React.FC = () => {
   const [now, setNow] = useState(Date.now());
 
   useEffect(()=>{ const id = setInterval(()=> setNow(Date.now()), 1000); return ()=> clearInterval(id); }, []);
+  useEffect(()=> { if (minutes > maxSessionMinutes) setMinutes(maxSessionMinutes); }, [maxSessionMinutes]);
 
   const remainingMs = focusActive && sessionEnd ? Math.max(0, sessionEnd - now) : 0;
   const totalMinutes = sessionDurationMinutes || minutes;
@@ -50,8 +51,8 @@ export const FocusSession: React.FC = () => {
         <div className="modal-backdrop">
           <div className="modal">
             <h3 style={{margin:'0 0 4px'}}>{activity==='mining'? 'Mining Session':'Fishing Session'}</h3>
-            <div style={{fontSize:12, opacity:.7}}>Length: 15 - 60 minutes</div>
-            <input className="range-input" type="range" min={15} max={60} step={1} value={minutes} onChange={e=> setMinutes(parseInt(e.target.value,10))} />
+            <div style={{fontSize:12, opacity:.7}}>Length: 15 - {maxSessionMinutes} minutes</div>
+            <input className="range-input" type="range" min={15} max={maxSessionMinutes} step={1} value={minutes} onChange={e=> setMinutes(parseInt(e.target.value,10))} />
             <div style={{fontSize:36, fontWeight:600, textAlign:'center'}}>{minutes}m</div>
             {activity==='mining' && (
               <div style={{marginTop:12}}>
@@ -82,6 +83,9 @@ export const FocusSession: React.FC = () => {
             <div style={{fontSize:12, opacity:.75}}>Attempts: {summary.attempts}</div>
             {summary.activity==='mining' && summary.miningDepth !== undefined && (
               <div style={{fontSize:12, opacity:.75}}>Depth Mined: {summary.miningDepth} m {summary.depthGained? `( +${summary.depthGained} m )` : ''}</div>
+            )}
+            {summary.activity==='mining' && summary.travelMinutes !== undefined && (
+              <div style={{fontSize:12, opacity:.75}}>Travel Time: {summary.travelMinutes}m | Effective Mining: {summary.effectiveMiningMinutes}m</div>
             )}
             {summary.activity==='mining' && summary.minerals && (
               <div style={{display:'flex', gap:8, flexWrap:'wrap', marginTop:8}}>

@@ -22,7 +22,7 @@ export const UpgradesPanel: React.FC = () => {
                     </button>
                   </div>
                   <div style={{fontSize:12, opacity:.8}}>{u.description}</div>
-                  <div style={{fontSize:11, marginTop:4, display:'flex', gap:6}}>
+                  <div style={{fontSize:11, marginTop:4, display:'flex', gap:6, flexWrap:'wrap'}}>
                     {Object.entries(u.cost).map(([k,v]) => (
                       <span key={k} style={{background:'#0d1117', padding:'2px 6px', border:'1px solid #30363d', borderRadius:4}}>{k}:{v}</span>
                     ))}
