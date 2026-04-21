@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { useGameStore } from '../useGameStore';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useGameStore, computeMiningEV, computeFishingEV } from '../useGameStore';
 
 const LAST_DURATION_KEY = 'ff:lastDuration';
 const LAST_ACTIVITY_KEY = 'ff:lastActivity';
 const LAST_DEPTH_KEY = 'ff:lastDepth';
 
 export const FocusSession: React.FC = () => {
-  const { focusActive, startFocus, interruptFocus, completeNow, summary, ackSummary, sessionEnd, sessionStart, sessionDurationMinutes, mineDepth, maxSessionMinutes } = useGameStore();
+  const { focusActive, startFocus, interruptFocus, completeNow, summary, ackSummary, sessionEnd, sessionStart, sessionDurationMinutes, mineDepth, maxSessionMinutes, currentMine, baseMiningRate, baseFishingRate, travelSpeed } = useGameStore();
   const [showPicker, setShowPicker] = useState(false);
   const [minutes, setMinutes] = useState<number>(() => { const saved = typeof window !== 'undefined' ? localStorage.getItem(LAST_DURATION_KEY) : null; return saved ? parseInt(saved,10) : 25; });
   const [activity, setActivity] = useState<'mining'|'fishing'>(()=> (localStorage.getItem(LAST_ACTIVITY_KEY) as any)||'mining');
@@ -24,6 +24,16 @@ export const FocusSession: React.FC = () => {
   const begin = () => { startFocus(activity, minutes, activity==='mining'? depth : undefined); localStorage.setItem(LAST_DURATION_KEY, String(minutes)); localStorage.setItem(LAST_ACTIVITY_KEY, activity); if (activity==='mining') localStorage.setItem(LAST_DEPTH_KEY, String(depth)); setShowPicker(false); };
 
   const maxSelectableDepth = Math.floor(mineDepth); // can only choose depths up to current deepest integer
+
+  const miningPreview = useMemo(() => {
+    if (!showPicker || activity !== 'mining') return null;
+    return computeMiningEV({ depth, mine: currentMine, minutes, baseRate: baseMiningRate, travelSpeed });
+  }, [showPicker, activity, depth, currentMine, minutes, baseMiningRate, travelSpeed]);
+
+  const fishingPreview = useMemo(() => {
+    if (!showPicker || activity !== 'fishing') return null;
+    return computeFishingEV({ minutes, baseRate: baseFishingRate });
+  }, [showPicker, activity, minutes, baseFishingRate]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -64,6 +74,39 @@ export const FocusSession: React.FC = () => {
                 <div style={{textAlign:'center', fontWeight:600}}>{depth} m</div>
                 <div style={{fontSize:11, opacity:.6, marginTop:4}}>
                   Only mining at your current deepest depth (floor) can push deeper.
+                </div>
+              </div>
+            )}
+            {activity==='mining' && miningPreview && (
+              <div className="ev-preview">
+                <div className="ev-head">Expected yield (approx.)</div>
+                <div className="ev-meta">
+                  ~{miningPreview.attempts} attempts · {miningPreview.travelMinutes.toFixed(1)}m travel · {miningPreview.effectiveMinutes.toFixed(1)}m effective
+                </div>
+                <div className="ev-row">
+                  {Object.entries(miningPreview.ev)
+                    .filter(([,v]) => (v as number) >= 0.5)
+                    .sort((a,b)=> (b[1] as number) - (a[1] as number))
+                    .map(([k,v]) => (
+                      <span key={k} className="ev-chip"><b>{k}</b> ~{formatEV(v as number)}</span>
+                    ))}
+                  {Object.values(miningPreview.ev).every(v => (v as number) < 0.5) && (
+                    <span style={{opacity:.6}}>No minerals unlocked at this depth</span>
+                  )}
+                </div>
+              </div>
+            )}
+            {activity==='fishing' && fishingPreview && (
+              <div className="ev-preview">
+                <div className="ev-head">Expected catch (approx.)</div>
+                <div className="ev-meta">~{fishingPreview.attempts} casts</div>
+                <div className="ev-row">
+                  {Object.entries(fishingPreview.ev)
+                    .filter(([,v]) => (v as number) >= 0.1)
+                    .sort((a,b)=> (b[1] as number) - (a[1] as number))
+                    .map(([k,v]) => (
+                      <span key={k} className="ev-chip"><b>{k.replace('_',' ')}</b> ~{formatEV(v as number)}</span>
+                    ))}
                 </div>
               </div>
             )}
@@ -116,3 +159,9 @@ export const FocusSession: React.FC = () => {
 };
 
 function formatTime(ms: number) { const totalSec = Math.ceil(ms/1000); const m = Math.floor(totalSec/60); const s = totalSec % 60; return `${m}:${s.toString().padStart(2,'0')}`; }
+
+function formatEV(v: number): string {
+  if (v >= 10) return v.toFixed(0);
+  if (v >= 1) return v.toFixed(1);
+  return v.toFixed(2);
+}

@@ -41,6 +41,13 @@ button { font-family:inherit; }
 
 .range-input { width:100%; }
 
+.ev-preview { margin-top:12px; padding:10px 12px; background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:10px; display:flex; flex-direction:column; gap:6px; }
+.ev-preview .ev-head { font-size:11px; font-weight:600; opacity:.7; text-transform:uppercase; letter-spacing:.04em; }
+.ev-preview .ev-meta { font-size:11px; opacity:.6; }
+.ev-preview .ev-row { display:flex; flex-wrap:wrap; gap:6px; }
+.ev-chip { font-size:11px; padding:3px 8px; border-radius:999px; background:rgba(31,111,235,.15); border:1px solid rgba(31,111,235,.35); color:#c9d9ff; }
+.ev-chip b { font-weight:600; margin-right:4px; text-transform:capitalize; }
+
 .avatar-wrapper { display:flex; flex-direction:column; align-items:center; gap:6px; }
 .avatar-stage { position:relative; width:140px; height:140px; background:linear-gradient(#181e26,#0d1117); border:1px solid var(--border); border-radius:16px; display:flex; align-items:flex-end; justify-content:center; padding:8px; overflow:hidden; }
 .avatar-char { width:120px; height:120px; position:relative; }
@@ -73,4 +80,12 @@ button { font-family:inherit; }
   .app-shell { max-width:900px; margin:0 auto; }
   .content { padding-bottom:120px; }
   .sticky-actions { max-width:900px; margin:0 auto; left:50%; transform:translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar-idle .avatar-pick,
+  .avatar-mining .avatar-pick,
+  .avatar-mining .avatar-spark,
+  .avatar-fishing .avatar-rod { animation: none !important; }
+  .timer-bar > div { transition: none !important; }
 }

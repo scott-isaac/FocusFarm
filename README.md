@@ -40,9 +40,9 @@ Two activities are implemented; you pick one per session.
 ### Tech
 
 - React 18 + TypeScript + Vite
-- Zustand for state
+- Zustand for state (with `persist` middleware → `localStorage`)
 - Single global CSS file
-- No backend — fully static; state lives in memory and resets on reload.
+- No backend — fully static. Progress (inventory, depth, upgrades, mine layout) is saved to `localStorage`; in-flight sessions are intentionally *not* persisted, so closing the tab cancels the run.
 
 ## Running Locally
 
@@ -61,10 +61,9 @@ Deployed to GitHub Pages via `.github/workflows/deploy.yml` on every push to `ma
 ## Planned / Roadmap
 
 Near-term:
-- **Persistence.** Save full game state to `localStorage` (upgrades, depth, inventory). Currently only a few prefs are remembered.
 - **Balancing pass.** Unlock depths, mineral weights, and upgrade costs want tuning.
-- **Probability / EV tooltips.** Show expected yield for the chosen session so upgrades feel informed.
-- **Accessibility.** ARIA roles, keyboard nav for the session picker, reduced-motion toggle.
+- **Accessibility.** ARIA roles and keyboard nav for the session picker (reduced-motion is already respected via `prefers-reduced-motion`).
+- **OG image.** Current Open Graph card falls back to title/description only; a real 1200×630 PNG would make shared links look better.
 
 Medium-term:
 - **Multiple mine slots.** Choose or reroll mines with different mineral layouts.
